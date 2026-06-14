@@ -1,36 +1,131 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# ───────────────────────────────────────────
+# DEPENDENCIES
+# ───────────────────────────────────────────
+node_modules/
+.pnp
 .pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 
-# testing
-/coverage
 
-# next.js
-/.next/
-/out/
+# ───────────────────────────────────────────
+# BUILD OUTPUTS
+# ───────────────────────────────────────────
+# Next.js
+.next/
+out/
 
-# production
-/build
+# NestJS / general
+dist/
+build/
 
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+
+# ───────────────────────────────────────────
+# ENVIRONMENT & SECRETS
+# ───────────────────────────────────────────
+.env
+.env.*
+!.env.example        # Permite subir el archivo de plantilla
+!.env.test           # Permite subir variables de test no sensibles
+
+
+# ───────────────────────────────────────────
+# LOGS
+# ───────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+
+# ───────────────────────────────────────────
+# TESTING & COVERAGE
+# ───────────────────────────────────────────
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+.playwright/
+
+
+# ───────────────────────────────────────────
+# CACHE & TEMPORALES
+# ───────────────────────────────────────────
+.cache/
+.temp/
+.tmp/
+tmp/
+temp/
+.turbo/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.prettiercache
+
+
+# ───────────────────────────────────────────
+# PLATAFORMAS DE DESPLIEGUE
+# ───────────────────────────────────────────
+# Vercel
+.vercel/
+
+# Render
+.render/
+
+
+# ───────────────────────────────────────────
+# EDITORES — VISUAL STUDIO CODE
+# ───────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json   # Comparte extensiones recomendadas
+!.vscode/settings.json     # Comparte config del proyecto
+!.vscode/launch.json       # Comparte configuración de debug
+!.vscode/tasks.json        # Comparte tareas del proyecto
+
+
+# ───────────────────────────────────────────
+# SISTEMA OPERATIVO — WINDOWS 10
+# ───────────────────────────────────────────
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+
+# ───────────────────────────────────────────
+# SEGURIDAD
+# ───────────────────────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+*.crt
+
+
+# ───────────────────────────────────────────
+# MISCELÁNEA
+# ───────────────────────────────────────────
+*.tgz
+*.zip
+.npmrc          # Puede contener tokens; usa .npmrc.example como plantilla
