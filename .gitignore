@@ -30,10 +30,7 @@ next-env.d.ts
 # ENVIRONMENT & SECRETS
 # ───────────────────────────────────────────
 .env
-.env.*
-!.env.example        # Permite subir el archivo de plantilla
-!.env.test           # Permite subir variables de test no sensibles
-
+.env.local
 
 # ───────────────────────────────────────────
 # LOGS
@@ -45,6 +42,7 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+backend/logs/
 
 
 # ───────────────────────────────────────────
@@ -128,4 +126,4 @@ $RECYCLE.BIN/
 # ───────────────────────────────────────────
 *.tgz
 *.zip
-.npmrc          # Puede contener tokens; usa .npmrc.example como plantilla
+.npmrc
