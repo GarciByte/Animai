@@ -30,11 +30,32 @@ async function bootstrap() {
   // Prefijo global para todas las rutas: /api/anime, /api/character, etc.
   app.setGlobalPrefix('api');
 
+  //  ── Swagger: solo en desarrollo ──────────────────────────────
+  if (process.env.NODE_ENV !== 'production') {
+    const { SwaggerModule, DocumentBuilder } = await import('@nestjs/swagger');
+
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Animai API')
+      .setDescription(
+        'Documentación de todos los endpoints del backend de Animai',
+      )
+      .setVersion('1.0')
+      .addTag('health', 'Estado del servidor')
+      .addTag('anime', 'Búsqueda y detalles de animes')
+      .addTag('characters', 'Búsqueda y detalles de personajes')
+      .addTag('ai', 'Chat e análisis con IA')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document);
+
+    console.log(`📖 Swagger disponible en http://localhost:${port}/docs`);
+  }
+
   // '0.0.0.0' es obligatorio en Render: sin esto el servidor escucha
   // solo en localhost interno y Render no puede enrutarle tráfico externo.
   // En local no afecta en nada, funciona igual.
   await app.listen(port, '0.0.0.0');
-
   const env = process.env.NODE_ENV ?? 'development';
   console.log(`[${env}] Backend corriendo en el puerto ${port}`);
 }
