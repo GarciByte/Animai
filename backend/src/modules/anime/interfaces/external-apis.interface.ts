@@ -60,9 +60,20 @@ export interface JikanPromoItem {
   };
 }
 
+export interface JikanMusicVideoItem {
+  title: string;
+  video: {
+    youtube_id: string | null;
+    url: string | null;
+    images: { maximum_image_url: string | null } | null;
+  };
+  meta: { title: string | null; author: string | null };
+}
+
 export interface JikanVideosResponse {
   data: {
     promo: JikanPromoItem[];
+    music_videos: JikanMusicVideoItem[];
   };
 }
 
@@ -141,4 +152,16 @@ export interface TmdbTvDetail {
   id: number;
   name: string;
   overview: string;
+}
+
+export interface TmdbMovieSearchResult {
+  id: number;
+  title: string;
+  release_date: string | null;
+  genre_ids: number[];
+  original_language: string;
+}
+
+export interface TmdbMovieSearchResponse {
+  results: TmdbMovieSearchResult[];
 }

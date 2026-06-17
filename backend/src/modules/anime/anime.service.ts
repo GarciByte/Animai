@@ -38,6 +38,8 @@ import {
   JikanReviewsResponse,
   JikanVideosResponse,
   TmdbImagesResponse,
+  TmdbMovieSearchResponse,
+  TmdbMovieSearchResult,
   TmdbSearchResponse,
   TmdbSearchResult,
   TmdbTvDetail,
@@ -144,6 +146,17 @@ export class AnimeService {
     const media = anilistData.Media;
     const { idMal, title, seasonYear } = media;
 
+    const prequelTitles = media.relations.edges
+      .filter(
+        (e) =>
+          (e.relationType === 'PREQUEL' || e.relationType === 'PARENT') &&
+          !e.node.isAdult,
+      )
+      .map((e) => ({
+        romaji: e.node.title.romaji,
+        english: e.node.title.english ?? null,
+      }));
+
     this.logger.info(
       'AniList data received, fetching external APIs in parallel',
       {
@@ -166,6 +179,8 @@ export class AnimeService {
         title.romaji,
         seasonYear ?? null,
         media.countryOfOrigin ?? null,
+        media.format ?? null,
+        prequelTitles,
       ),
     ]);
 
@@ -314,20 +329,27 @@ export class AnimeService {
     romajiTitle: string,
     seasonYear: number | null,
     countryOfOrigin: string | null,
+    format: string | null,
+    prequelTitles: Array<{ romaji: string; english: string | null }>,
   ): Promise<TmdbBundle | null> {
-    const tmdbId = await this.findTmdbId(
+    const isMovie = format === 'MOVIE';
+
+    const entry = await this.findTmdbEntry(
       englishTitle,
       romajiTitle,
       seasonYear,
       countryOfOrigin,
+      isMovie,
+      prequelTitles,
     );
-    if (!tmdbId) return null;
+    if (!entry) return null;
+
+    const basePath =
+      entry.mediaType === 'movie' ? `/movie/${entry.id}` : `/tv/${entry.id}`;
 
     const [images, detail] = await Promise.allSettled([
-      this.tmdb.get<TmdbImagesResponse>(`/tv/${tmdbId}/images`, {
-        include_image_language: 'es,en,null',
-      }),
-      this.tmdb.get<TmdbTvDetail>(`/tv/${tmdbId}`, { language: 'es-ES' }),
+      this.tmdb.get<TmdbImagesResponse>(`${basePath}/images`),
+      this.tmdb.get<TmdbTvDetail>(basePath, { language: 'es-ES' }),
     ]);
 
     return {
@@ -336,54 +358,66 @@ export class AnimeService {
     };
   }
 
-  private async findTmdbId(
+  private async findTmdbEntry(
     englishTitle: string | null,
     romajiTitle: string,
     year: number | null,
     countryOfOrigin: string | null,
-  ): Promise<number | null> {
-    const titles = [englishTitle, romajiTitle].filter(Boolean) as string[];
+    isMovie: boolean,
+    prequelTitles: Array<{ romaji: string; english: string | null }>,
+  ): Promise<{ id: number; mediaType: 'tv' | 'movie' } | null> {
+    const mediaType = isMovie ? 'movie' : 'tv';
+    const endpoint = isMovie ? '/search/movie' : '/search/tv';
 
-    for (const title of titles) {
-      try {
-        const res = await this.tmdb.get<TmdbSearchResponse>('/search/tv', {
-          query: title,
-          language: 'es-ES',
-        });
-        this.logger.info('TMDB search results', {
-          title,
-          total: res.results.length,
-        });
-        if (res.results.length > 0) {
-          const best = this.findBestTmdbMatch(
-            res.results,
-            year,
-            romajiTitle,
-            englishTitle,
-            countryOfOrigin,
-          );
-          if (best) {
-            this.logger.info('TMDB match found', {
-              title,
-              tmdbId: best.id,
-              name: best.name,
-            });
-            return best.id;
-          }
-          this.logger.warn('TMDB: results found but none passed the filter', {
-            title,
-            year,
-          });
-        }
-      } catch (err) {
-        this.logger.warn('TMDB search failed for title', {
-          title,
-          error: err as unknown,
-        });
+    // Intento 1 y 2: títulos propios del anime
+    const primaryTitles = [englishTitle, romajiTitle].filter(
+      Boolean,
+    ) as string[];
+    for (const title of primaryTitles) {
+      const id = await this.searchTmdbTitle(
+        title,
+        year,
+        countryOfOrigin,
+        romajiTitle,
+        englishTitle,
+        isMovie,
+        endpoint,
+      );
+      if (id) {
+        this.logger.info('TMDB match found', { title, tmdbId: id, mediaType });
+        return { id, mediaType };
       }
     }
 
-    this.logger.warn('TMDB: no ID found for anime', {
+    // Fallback: títulos de precuela/padre — sin restricción de año
+    if (prequelTitles.length) {
+      this.logger.debug('TMDB: trying prequel/parent titles', {
+        prequelTitles,
+      });
+      const fallback = prequelTitles.flatMap(
+        (t) => [t.english, t.romaji].filter(Boolean) as string[],
+      );
+      for (const title of fallback) {
+        const id = await this.searchTmdbTitle(
+          title,
+          null,
+          countryOfOrigin,
+          title,
+          null,
+          isMovie,
+          endpoint,
+        );
+        if (id) {
+          this.logger.info('TMDB: found via prequel/parent', {
+            title,
+            tmdbId: id,
+          });
+          return { id, mediaType };
+        }
+      }
+    }
+
+    this.logger.warn('TMDB: no entry found', {
       englishTitle,
       romajiTitle,
       year,
@@ -450,7 +484,7 @@ export class AnimeService {
 
     // Jikan: noticias
     const news: AnimeNewsItem[] | null =
-      jikan?.news?.data?.map((n) => ({
+      jikan?.news?.data?.slice(0, 10)?.map((n) => ({
         malId: n.mal_id,
         title: n.title,
         url: n.url,
@@ -471,6 +505,7 @@ export class AnimeService {
     const reviews: AnimeReview[] | null =
       jikan?.reviews?.data
         ?.filter((r) => !r.is_spoiler)
+        ?.slice(0, 10)
         ?.map((r) => ({
           malId: r.mal_id,
           url: r.url,
@@ -487,28 +522,72 @@ export class AnimeService {
         })) ?? null;
 
     // Jikan: vídeos promocionales
-    const promoVideos: AnimePromoVideo[] | null =
-      jikan?.videos?.data?.promo
-        ?.filter((v) => v.trailer.youtube_id)
-        ?.map((v) => ({
-          title: v.title,
-          youtubeId: v.trailer.youtube_id!,
-          url:
-            v.trailer.url ??
-            `https://www.youtube.com/watch?v=${v.trailer.youtube_id}`,
-          thumbnail: v.trailer.images?.maximum_image_url ?? null,
-        })) ?? null;
+    this.logger.info('Videos:', jikan?.videos?.data);
+    const promoVideos: AnimePromoVideo[] | null = (() => {
+      const extractYoutubeId = (url: string | null): string | null => {
+        if (!url) return null;
+        try {
+          return new URL(url).searchParams.get('v');
+        } catch {
+          return null;
+        }
+      };
 
-    // TMDB: posters en español
+      const promo: AnimePromoVideo[] =
+        jikan?.videos?.data?.promo
+          ?.map((v) => {
+            const youtubeId =
+              v.trailer.youtube_id ?? extractYoutubeId(v.trailer.url);
+            const url =
+              v.trailer.url ??
+              (youtubeId
+                ? `https://www.youtube.com/watch?v=${youtubeId}`
+                : null);
+            if (!youtubeId && !url) return null;
+            return {
+              title: v.title,
+              youtubeId,
+              url,
+              thumbnail: v.trailer.images?.maximum_image_url ?? null,
+            };
+          })
+          .filter((v): v is AnimePromoVideo => v !== null) ?? [];
+
+      const music: AnimePromoVideo[] =
+        jikan?.videos?.data?.music_videos
+          ?.map((v) => {
+            const youtubeId =
+              v.video.youtube_id ?? extractYoutubeId(v.video.url);
+            const url =
+              v.video.url ??
+              (youtubeId
+                ? `https://www.youtube.com/watch?v=${youtubeId}`
+                : null);
+            if (!youtubeId && !url) return null;
+            return {
+              title: v.meta?.title ?? v.title,
+              youtubeId,
+              url,
+              thumbnail: v.video.images?.maximum_image_url ?? null,
+            };
+          })
+          .filter((v): v is AnimePromoVideo => v !== null) ?? [];
+
+      const all = [...promo, ...music];
+      return all.length ? all : null;
+    })();
+
+    // Posters: máx. 20
     const posters: string[] | null =
       tmdb?.images?.posters
         ?.filter((p) => p.iso_639_1 === 'en' || p.iso_639_1 === null)
+        ?.slice(0, 20)
         ?.map((p) => `${this.TMDB_IMAGE_BASE}${p.file_path}`) ?? null;
 
-    // TMDB: backdrops (máximo 10)
+    // Backdrops: máx. 20
     const backdrops: string[] | null =
       tmdb?.images?.backdrops
-        ?.slice(0, 10)
+        ?.slice(0, 20)
         ?.map((b) => `${this.TMDB_IMAGE_BASE}${b.file_path}`) ?? null;
 
     // TMDB: sinopsis en español
@@ -676,6 +755,107 @@ export class AnimeService {
       videoUrl: t.animethemeentries[0]?.videos[0]?.link ?? null,
       spoiler: t.animethemeentries[0]?.spoiler ?? false,
     }));
+  }
+
+  private async searchTmdbTitle(
+    title: string,
+    year: number | null,
+    countryOfOrigin: string | null,
+    romajiTitle: string,
+    englishTitle: string | null,
+    isMovie: boolean,
+    endpoint: string,
+  ): Promise<number | null> {
+    try {
+      const params: Record<string, unknown> = {
+        query: title,
+        language: 'es-ES',
+      };
+      if (year)
+        params[isMovie ? 'primary_release_year' : 'first_air_date_year'] = year;
+
+      if (isMovie) {
+        const res = await this.tmdb.get<TmdbMovieSearchResponse>(
+          endpoint,
+          params,
+        );
+        this.logger.info('TMDB movie search', {
+          title,
+          total: res.results.length,
+        });
+        return (
+          this.findBestTmdbMovieMatch(
+            res.results,
+            year,
+            romajiTitle,
+            englishTitle,
+          )?.id ?? null
+        );
+      } else {
+        const res = await this.tmdb.get<TmdbSearchResponse>(endpoint, params);
+        this.logger.info('TMDB search', { title, total: res.results.length });
+        return (
+          this.findBestTmdbMatch(
+            res.results,
+            year,
+            romajiTitle,
+            englishTitle,
+            countryOfOrigin,
+          )?.id ?? null
+        );
+      }
+    } catch (err) {
+      this.logger.warn('TMDB search failed', { title, error: err as unknown });
+      return null;
+    }
+  }
+
+  private findBestTmdbMovieMatch(
+    results: TmdbMovieSearchResult[],
+    year: number | null,
+    romajiTitle: string,
+    englishTitle: string | null,
+  ): TmdbMovieSearchResult | null {
+    if (!results.length) return null;
+    const ANIMATION_GENRE_ID = 16;
+
+    const scored = results.map((r) => {
+      let score = 0;
+
+      if (r.genre_ids?.includes(ANIMATION_GENRE_ID)) score += 3;
+      else score -= 10;
+
+      if (r.original_language === 'ja') score += 2;
+
+      if (year && r.release_date) {
+        const releaseYear = new Date(r.release_date).getFullYear();
+        if (releaseYear === year) score += 4;
+        else if (Math.abs(releaseYear - year) <= 1) score += 1;
+        else score -= 5;
+      }
+
+      const name = r.title?.toLowerCase() ?? '';
+      const romaji = romajiTitle.toLowerCase();
+      const english = englishTitle?.toLowerCase() ?? '';
+      if (name === romaji || name === english) score += 4;
+      else if (name.includes(romaji) || romaji.includes(name)) score += 2;
+      else if (english && (name.includes(english) || english.includes(name)))
+        score += 2;
+      else score -= 3;
+
+      return { result: r, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    const best = scored[0];
+    if (best.score < 0) {
+      this.logger.debug('TMDB movie: low score, rejecting', {
+        title: best.result.title,
+        score: best.score,
+      });
+      return null;
+    }
+    return best.result;
   }
 
   private findBestTmdbMatch(
