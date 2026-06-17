@@ -9,8 +9,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { WinstonModule } from 'nest-winston';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { CacheService } from './common/cache/cache.service';
 import { AnilistClient } from './common/http/anilist/anilist.client';
 import { AnimeThemesClient } from './common/http/animethemes/animethemes.client';
@@ -52,10 +50,9 @@ import { CharacterModule } from './modules/character/character.module';
     AiModule,
     HttpClientsModule,
   ],
-  controllers: [AppController, HealthController],
+  controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    AppService,
     CacheService,
     AnilistClient,
     JikanClient,
