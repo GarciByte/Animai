@@ -1,7 +1,8 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -30,15 +31,22 @@ async function bootstrap() {
   // Prefijo global para todas las rutas: /api/anime, /api/character, etc.
   app.setGlobalPrefix('api');
 
+  // Validación y transformación automática de DTOs
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // convierte string → number en query params
+      whitelist: true, // elimina propiedades no declaradas en el DTO
+      forbidNonWhitelisted: false,
+    }),
+  );
+
   //  ── Swagger: solo en desarrollo ──────────────────────────────
   if (process.env.NODE_ENV !== 'production') {
     const { SwaggerModule, DocumentBuilder } = await import('@nestjs/swagger');
 
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Animai API')
-      .setDescription(
-        'Documentación de todos los endpoints del backend de Animai',
-      )
+      .setDescription('Documentación de la API de Animai')
       .setVersion('1.0')
       .addTag('health', 'Estado del servidor')
       .addTag('anime', 'Búsqueda y detalles de animes')

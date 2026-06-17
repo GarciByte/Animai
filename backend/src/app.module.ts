@@ -1,28 +1,30 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import {
   MiddlewareConsumer,
   Module,
   NestModule,
   RequestMethod,
 } from '@nestjs/common';
-import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { WinstonModule } from 'nest-winston';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheModule } from '@nestjs/cache-manager';
+import { CacheService } from './common/cache/cache.service';
+import { AnilistClient } from './common/http/anilist/anilist.client';
+import { AnimeThemesClient } from './common/http/animethemes/animethemes.client';
+import { HttpClientsModule } from './common/http/http-clients.module';
+import { JikanClient } from './common/http/jikan/jikan.client';
+import { OpenRouterClient } from './common/http/openrouter/openrouter.client';
+import { TmdbClient } from './common/http/tmdb/tmdb.client';
+import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
+import { winstonConfig } from './common/logger/logger.config';
+import configuration from './config/configuration';
 import { HealthController } from './health.controller';
+import { AiModule } from './modules/ai/ai.module';
 import { AnimeModule } from './modules/anime/anime.module';
 import { CharacterModule } from './modules/character/character.module';
-import { AiModule } from './modules/ai/ai.module';
-import { CacheService } from './common/cache/cache.service';
-import { WinstonModule } from 'nest-winston';
-import { winstonConfig } from './common/logger/logger.config';
-import { AnilistClient } from './common/http/anilist/anilist.client';
-import { JikanClient } from './common/http/jikan/jikan.client';
-import { TmdbClient } from './common/http/tmdb/tmdb.client';
-import { AnimeThemesClient } from './common/http/animethemes/animethemes.client';
-import { OpenRouterClient } from './common/http/openrouter/openrouter.client';
-import { HttpClientsModule } from './common/http/http-clients.module';
-import configuration from './config/configuration';
 
 @Module({
   imports: [
@@ -35,6 +37,16 @@ import configuration from './config/configuration';
       }),
     }),
     WinstonModule.forRoot(winstonConfig),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          name: 'default',
+          ttl: config.get<number>('throttle.ttl') ?? 60000,
+          limit: config.get<number>('throttle.limit') ?? 20,
+        },
+      ],
+    }),
     AnimeModule,
     CharacterModule,
     AiModule,
@@ -42,6 +54,7 @@ import configuration from './config/configuration';
   ],
   controllers: [AppController, HealthController],
   providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     AppService,
     CacheService,
     AnilistClient,

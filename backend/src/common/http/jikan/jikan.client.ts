@@ -1,11 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosInstance, AxiosError } from 'axios';
-
-// ── Tipos de la respuesta cruda de Jikan ────────────────────────
-interface JikanResponse<T> {
-  data: T;
-}
+import axios, { AxiosError, AxiosInstance } from 'axios';
+import Bottleneck from 'bottleneck';
 
 interface JikanError {
   status: number;
@@ -17,6 +13,10 @@ interface JikanError {
 @Injectable()
 export class JikanClient {
   private readonly http: AxiosInstance;
+  private readonly limiter = new Bottleneck({
+    maxConcurrent: 1, // una petición a la vez
+    minTime: 400, // 400ms entre peticiones (~2.5 req/s)
+  });
 
   constructor(private readonly config: ConfigService) {
     this.http = axios.create({
@@ -25,10 +25,17 @@ export class JikanClient {
     });
   }
 
-  async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+  get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+    return this.limiter.schedule(() => this.execute<T>(path, params));
+  }
+
+  private async execute<T>(
+    path: string,
+    params?: Record<string, unknown>,
+  ): Promise<T> {
     try {
-      const response = await this.http.get<JikanResponse<T>>(path, { params });
-      return response.data.data;
+      const response = await this.http.get<T>(path, { params });
+      return response.data; // ← fix: sin el segundo .data
     } catch (err) {
       // Jikan devuelve errores como respuestas HTTP 4xx/5xx,
       // por lo que axios los lanza como AxiosError
@@ -38,7 +45,6 @@ export class JikanClient {
           `Jikan error: ${jikanError.message ?? err.message}`,
         );
       }
-
       // Error de red u otro error inesperado
       throw new InternalServerErrorException(
         `Jikan error inesperado: ${err instanceof Error ? err.message : 'Unknown error'}`,
