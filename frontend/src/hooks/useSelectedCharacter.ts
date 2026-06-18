@@ -1,43 +1,53 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useCallback } from "react";
 import { SelectedCharacter } from "@/types/ai.types";
-import { DEFAULT_CHARACTER, SELECTED_CHARACTER_KEY } from "@/lib/constants";
+import { DEFAULT_CHARACTER, STORAGE_KEYS } from "@/lib/constants";
+
+function persist(character: SelectedCharacter): void {
+  window.localStorage.setItem(
+    STORAGE_KEYS.SELECTED_CHARACTER,
+    JSON.stringify(character),
+  );
+}
 
 function getInitialCharacter(): SelectedCharacter {
-  // Esta función solo se ejecuta en el cliente (useState lazy init)
+  // Solo se ejecuta en el cliente: con useState lazy init nunca corre
+  // en el servidor durante el renderizado inicial de Next.js
   if (typeof window === "undefined") return DEFAULT_CHARACTER;
 
-  const stored = localStorage.getItem(SELECTED_CHARACTER_KEY);
+  const stored = window.localStorage.getItem(STORAGE_KEYS.SELECTED_CHARACTER);
 
   if (!stored) {
-    localStorage.setItem(
-      SELECTED_CHARACTER_KEY,
-      JSON.stringify(DEFAULT_CHARACTER),
-    );
+    persist(DEFAULT_CHARACTER);
     return DEFAULT_CHARACTER;
   }
 
   try {
-    return JSON.parse(stored) as SelectedCharacter;
+    const parsed = JSON.parse(stored) as Partial<SelectedCharacter>;
+    // Fusiona con el default: si en el futuro se añade un campo nuevo a
+    // SelectedCharacter, los usuarios con datos antiguos guardados no
+    // se quedan con `undefined` en ese campo.
+    return { ...DEFAULT_CHARACTER, ...parsed };
   } catch {
-    // JSON corrupto: restaurar el personaje por defecto
-    localStorage.setItem(
-      SELECTED_CHARACTER_KEY,
-      JSON.stringify(DEFAULT_CHARACTER),
-    );
+    persist(DEFAULT_CHARACTER);
     return DEFAULT_CHARACTER;
   }
 }
 
 export function useSelectedCharacter() {
-  // La función se pasa como callback para que useState la llame
-  // solo una vez durante la inicialización, no en cada render
-  const [character, setCharacter] =
+  const [character, setCharacterState] =
     useState<SelectedCharacter>(getInitialCharacter);
 
-  const updateCharacter = (newCharacter: SelectedCharacter) => {
-    localStorage.setItem(SELECTED_CHARACTER_KEY, JSON.stringify(newCharacter));
-    setCharacter(newCharacter);
-  };
+  const setCharacter = useCallback((newCharacter: SelectedCharacter) => {
+    persist(newCharacter);
+    setCharacterState(newCharacter);
+  }, []);
 
-  return { character, updateCharacter };
+  const resetToDefault = useCallback(
+    () => setCharacter(DEFAULT_CHARACTER),
+    [setCharacter],
+  );
+
+  return { character, setCharacter, resetToDefault };
 }
