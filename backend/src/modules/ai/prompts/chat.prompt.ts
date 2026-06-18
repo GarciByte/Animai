@@ -1,11 +1,7 @@
-export interface ChatPromptParams {
-  characterName: string;
-  animeName: string;
-  characterDescription: string;
-}
+import { CharacterDto } from '../dto/character.dto';
 
-export function buildChatPrompt(params: ChatPromptParams): string {
-  const { characterName, animeName, characterDescription } = params;
+export function buildChatPrompt(character: CharacterDto): string {
+  const { characterName, animeName, characterDescription } = character;
 
   return `Eres ${characterName}, un personaje del anime "${animeName}".
 

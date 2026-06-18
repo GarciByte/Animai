@@ -522,33 +522,37 @@ export class AnimeService {
         })) ?? null;
 
     // Jikan: vídeos promocionales
-    this.logger.info('Videos:', jikan?.videos?.data);
     const promoVideos: AnimePromoVideo[] | null = (() => {
-      const extractYoutubeId = (url: string | null): string | null => {
-        if (!url) return null;
-        try {
-          return new URL(url).searchParams.get('v');
-        } catch {
-          return null;
-        }
+      // Extrae el ID de cualquier forma en que YouTube lo proporcione,
+      // priorizando embed_url porque es el único campo que Jikan rellena
+      const extractYoutubeId = (
+        str: string | null | undefined,
+      ): string | null => {
+        if (!str) return null;
+        // /embed/VIDEO_ID?...
+        const embed = str.match(/\/embed\/([a-zA-Z0-9_-]{11})/);
+        if (embed) return embed[1];
+        // ?v=VIDEO_ID o youtu.be/VIDEO_ID
+        const watch = str.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        if (watch) return watch[1];
+        // ID desnudo de 11 caracteres
+        if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
+        return null;
       };
 
       const promo: AnimePromoVideo[] =
         jikan?.videos?.data?.promo
           ?.map((v) => {
             const youtubeId =
-              v.trailer.youtube_id ?? extractYoutubeId(v.trailer.url);
-            const url =
-              v.trailer.url ??
-              (youtubeId
-                ? `https://www.youtube.com/watch?v=${youtubeId}`
-                : null);
-            if (!youtubeId && !url) return null;
+              extractYoutubeId(v.trailer.youtube_id) ??
+              extractYoutubeId(v.trailer.embed_url) ??
+              extractYoutubeId(v.trailer.url);
+            if (!youtubeId) return null;
             return {
-              title: v.title,
+              title: v.title || 'Trailer',
               youtubeId,
-              url,
-              thumbnail: v.trailer.images?.maximum_image_url ?? null,
+              url: `https://www.youtube.com/watch?v=${youtubeId}`,
+              thumbnail: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
             };
           })
           .filter((v): v is AnimePromoVideo => v !== null) ?? [];
@@ -557,18 +561,15 @@ export class AnimeService {
         jikan?.videos?.data?.music_videos
           ?.map((v) => {
             const youtubeId =
-              v.video.youtube_id ?? extractYoutubeId(v.video.url);
-            const url =
-              v.video.url ??
-              (youtubeId
-                ? `https://www.youtube.com/watch?v=${youtubeId}`
-                : null);
-            if (!youtubeId && !url) return null;
+              extractYoutubeId(v.video.youtube_id) ??
+              extractYoutubeId(v.video.embed_url) ??
+              extractYoutubeId(v.video.url);
+            if (!youtubeId) return null;
             return {
               title: v.meta?.title ?? v.title,
               youtubeId,
-              url,
-              thumbnail: v.video.images?.maximum_image_url ?? null,
+              url: `https://www.youtube.com/watch?v=${youtubeId}`,
+              thumbnail: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
             };
           })
           .filter((v): v is AnimePromoVideo => v !== null) ?? [];

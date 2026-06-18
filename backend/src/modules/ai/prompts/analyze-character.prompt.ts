@@ -1,19 +1,32 @@
-import { ChatPromptParams } from './chat.prompt';
+import { AnalyzeCharacterDataDto } from '../dto/analyze-character.dto';
+import { CharacterDto } from '../dto/character.dto';
 
-export interface AnalyzeCharacterPromptParams {
-  character: ChatPromptParams;
-  targetCharacter: {
-    name: string;
-    description: string;
-    animes: string[];
-  };
+function formatBirthday(date?: {
+  year?: number | null;
+  month?: number | null;
+  day?: number | null;
+}): string {
+  if (!date || (!date.year && !date.month && !date.day)) return 'Desconocido';
+  const parts = [date.day, date.month, date.year].filter(
+    (p) => p !== null && p !== undefined,
+  );
+  return parts.length ? parts.join('/') : 'Desconocido';
 }
 
 export function buildAnalyzeCharacterPrompt(
-  params: AnalyzeCharacterPromptParams,
+  character: CharacterDto,
+  target: AnalyzeCharacterDataDto,
 ): string {
-  const { character, targetCharacter } = params;
   const { characterName, animeName, characterDescription } = character;
+
+  const mainWorksText = target.mediaMain?.length
+    ? target.mediaMain.map((m) => `${m.title} (${m.year ?? 's/f'})`).join(', ')
+    : 'Ninguna conocida';
+  const supportingWorksText = target.mediaSupporting?.length
+    ? target.mediaSupporting
+        .map((m) => `${m.title} (${m.year ?? 's/f'})`)
+        .join(', ')
+    : 'Ninguna conocida';
 
   return `Eres ${characterName}, un personaje del anime "${animeName}".
 
@@ -24,19 +37,25 @@ INSTRUCCIONES DE PERSONAJE:
 - Habla siempre en primera persona como ${characterName}.
 - Mantén tu tono, vocabulario y personalidad en todo momento.
 - No rompas el personaje bajo ninguna circunstancia.
-- Responde siempre en el mismo idioma en el que el usuario te escriba.
+- Responde siempre en español.
 
 TAREA:
-Analiza al siguiente personaje desde tu perspectiva como ${characterName}.
+Analiza al siguiente personaje desde tu perspectiva como ${characterName} y da tu opinión detallada.
 
 DATOS DEL PERSONAJE A ANALIZAR:
-- Nombre: ${targetCharacter.name}
-- Aparece en: ${targetCharacter.animes.join(', ')}
-- Descripción: ${targetCharacter.description}
+- Nombre: ${target.name}${target.nativeName ? ` (${target.nativeName})` : ''}
+- Género: ${target.gender ?? 'Desconocido'}
+- Edad: ${target.age ?? 'Desconocida'}
+- Grupo sanguíneo: ${target.bloodType ?? 'Desconocido'}
+- Cumpleaños: ${formatBirthday(target.birthday)}
+- Favoritos: ${target.favourites ?? 'Desconocidos'}
+- Protagonista en: ${mainWorksText}
+- Personaje secundario en: ${supportingWorksText}
+- Descripción: ${target.description ?? 'Sin descripción disponible'}
 
 INSTRUCCIONES DE ANÁLISIS:
 - Da tu opinión sobre este personaje hablando como ${characterName}.
-- Analiza su personalidad y motivaciones con la voz de tu personaje.
-- Comenta su importancia dentro de su historia.
+- Analiza su personalidad, motivaciones y rol en la historia con tu propia voz.
+- Comenta qué lo hace memorable o único.
 - Evita spoilers importantes sobre su arco narrativo.`;
 }

@@ -74,9 +74,9 @@ export interface AnimeReview {
 
 export interface AnimePromoVideo {
   title: string;
-  youtubeId: string | null;
-  url: string | null;
-  thumbnail: string | null;
+  youtubeId: string;
+  url: string;
+  thumbnail: string;
 }
 
 export interface AnimeThemeItem {

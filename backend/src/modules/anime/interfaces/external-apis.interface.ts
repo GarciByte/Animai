@@ -53,6 +53,7 @@ export interface JikanPromoItem {
   trailer: {
     youtube_id: string | null;
     url: string | null;
+    embed_url: string | null;
     images: {
       image_url: string | null;
       maximum_image_url: string | null;
@@ -65,6 +66,7 @@ export interface JikanMusicVideoItem {
   video: {
     youtube_id: string | null;
     url: string | null;
+    embed_url: string | null;
     images: { maximum_image_url: string | null } | null;
   };
   meta: { title: string | null; author: string | null };
