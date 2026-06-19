@@ -14,9 +14,10 @@ const FORMAT_LABELS: Record<string, string> = {
 
 interface AnimeCardProps {
     anime: AnimeListItem;
+    priority?: boolean;
 }
 
-export function AnimeCard({ anime }: AnimeCardProps) {
+export function AnimeCard({ anime, priority = false }: AnimeCardProps) {
     const title = anime.title.romaji;
     const formatLabel = anime.format ? FORMAT_LABELS[anime.format] ?? anime.format : null;
 
@@ -26,13 +27,14 @@ export function AnimeCard({ anime }: AnimeCardProps) {
             className="group flex flex-col gap-2 rounded-lg transition-transform hover:-translate-y-1"
         >
             {/* fill en vez de width/height numéricos: el ancho de la card es
-          responsive (depende del grid), así que no hay un tamaño fijo
-          que darle. fill también es inmune al warning de aspect ratio. */}
+            responsive (depende del grid), así que no hay un tamaño fijo
+            que darle. fill también es inmune al warning de aspect ratio. */}
             <div className="relative aspect-2/3 w-full overflow-hidden rounded-lg bg-card">
                 <Image
                     src={anime.coverImage.large}
                     alt={title}
                     fill
+                    priority={priority}
                     sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 16vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />

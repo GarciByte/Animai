@@ -16,30 +16,32 @@ export function NavBar() {
     const { character } = useCharacter();
 
     return (
-        <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur">
-            <nav className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4">
+        <header className="sticky top-0 z-50 border-b border-border bg-navbar/90 backdrop-blur">
+            <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:h-20 sm:gap-4 sm:px-4">
                 {/* Logo */}
-                <Link href="/" className="flex shrink-0 items-center gap-3">
+                <Link href="/" className="flex shrink-0 items-center gap-2">
                     <Image
                         src="/logo.png"
                         alt="Animai"
-                        width={48}
-                        height={48}
+                        width={44}
+                        height={44}
                         priority
-                        className="h-12 w-12 object-contain"
+                        className="h-9 w-9 object-contain sm:h-11 sm:w-11"
                     />
-                    <span className="text-xl font-bold tracking-tight">Animai</span>
+                    <span className="hidden text-lg font-bold tracking-tight sm:inline sm:text-xl">
+                        Animai
+                    </span>
                 </Link>
 
                 {/* Navegación entre vistas */}
-                <ul className="flex items-center gap-1">
+                <ul className="flex items-center gap-0.5 sm:gap-1">
                     {NAV_LINKS.map(({ href, label }) => {
                         const isActive = pathname === href;
                         return (
                             <li key={href}>
                                 <Link
                                     href={href}
-                                    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive
+                                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:px-4 sm:py-2 sm:text-sm ${isActive
                                             ? 'bg-accent text-white'
                                             : 'text-muted hover:bg-background hover:text-foreground'
                                         }`}
@@ -54,10 +56,10 @@ export function NavBar() {
                 {/* Personaje asignado a la IA — clic lleva al chat */}
                 <Link
                     href="/chat"
-                    className="flex shrink-0 items-center rounded-full border border-border bg-background px-2 py-2 pr-5 transition-colors hover:bg-background/70"
-                    title={`Hablar con ${character.characterName}`}
+                    className="flex shrink-0 items-center rounded-full border border-border bg-background px-1.5 py-1.5 pr-3 transition-colors hover:bg-background/70 sm:px-2 sm:py-2 sm:pr-5"
+                    title={`Hablando como ${character.characterName}`}
                 >
-                    <CharacterBadge character={character} size="md" hideNameOnMobile />
+                    <CharacterBadge character={character} size="sm" hideNameOnMobile />
                 </Link>
             </nav>
         </header>

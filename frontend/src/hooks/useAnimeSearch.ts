@@ -6,7 +6,7 @@ import { ApiError } from "@/lib/api";
 import { AnimeListItem, SearchAnimeParams } from "@/types/anime.types";
 
 const DEFAULT_FILTERS: SearchAnimeParams = {
-  quickFilter: "TRENDING",
+  sort: "TRENDING_DESC",
   perPage: 20,
 };
 
@@ -18,32 +18,29 @@ export function useAnimeSearch() {
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
-  // Captura los filtros activos en el momento de presionar "buscar".
-  // loadMore usa SIEMPRE estos filtros, no los que el usuario tenga
-  // pendientes en la UI, para evitar paginación inconsistente.
+  // Refleja siempre el estado `filters` más reciente, de forma síncrona.
+  // applyFilter/updateQuery lo usan para calcular el "next" sin
+  // depender de closures que podrían estar desactualizadas.
+  const filtersRef = useRef<SearchAnimeParams>(DEFAULT_FILTERS);
+
+  // Snapshot de los filtros con los que se hizo la ÚLTIMA petición real.
+  // loadMore pagina siempre sobre estos, nunca sobre texto a medio
+  // escribir en el buscador de nombre que aún no se ha "buscado".
   const activeFiltersRef = useRef<SearchAnimeParams>(DEFAULT_FILTERS);
 
-  // Indica si está cargando la primera página (items vacíos):
-  // el componente puede mostrar skeleton en lugar de spinner.
   const isInitialLoading = isLoading && items.length === 0;
 
-  const search = useCallback(async () => {
-    // Congela los filtros actuales para que loadMore los use
-    activeFiltersRef.current = { ...filters };
+  const performSearch = useCallback(async (params: SearchAnimeParams) => {
+    activeFiltersRef.current = params;
 
     setIsLoading(true);
     setError(null);
-    // Limpiar la lista antes de cargar nuevos resultados
     setItems([]);
     setCurrentPage(1);
     setHasNextPage(false);
 
     try {
-      const result = await animeService.searchAnime({
-        ...activeFiltersRef.current,
-        page: 1,
-      });
-
+      const result = await animeService.searchAnime({ ...params, page: 1 });
       setItems(result.data);
       setHasNextPage(result.pageInfo.hasNextPage);
     } catch (err) {
@@ -55,10 +52,39 @@ export function useAnimeSearch() {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, []);
+
+  // Botón "Buscar" / Enter del buscador por nombre: aplica los filtros
+  // tal como están en este momento, incluyendo el texto recién escrito.
+  const search = useCallback(
+    () => performSearch(filtersRef.current),
+    [performSearch],
+  );
+
+  // Cambiar cualquier filtro (vista rápida, orden, temporada, año,
+  // formato, estado, género): actualiza el estado Y busca de inmediato.
+  const applyFilter = useCallback(
+    <K extends keyof SearchAnimeParams>(
+      key: K,
+      value: SearchAnimeParams[K],
+    ) => {
+      const next = { ...filtersRef.current, [key]: value };
+      filtersRef.current = next;
+      setFilters(next);
+      void performSearch(next);
+    },
+    [performSearch],
+  );
+
+  // Solo actualiza el texto del buscador por nombre, SIN buscar todavía.
+  // Sigue requiriendo el botón "Buscar" o Enter — no cambia con este ajuste.
+  const updateQuery = useCallback((value: string | undefined) => {
+    const next = { ...filtersRef.current, query: value };
+    filtersRef.current = next;
+    setFilters(next);
+  }, []);
 
   const loadMore = useCallback(async () => {
-    // Guardia: no cargar si ya hay una petición en curso o no hay más páginas
     if (isLoading || !hasNextPage) return;
 
     const nextPage = currentPage + 1;
@@ -66,10 +92,9 @@ export function useAnimeSearch() {
 
     try {
       const result = await animeService.searchAnime({
-        ...activeFiltersRef.current, // filtros del search activo, no los pendientes
+        ...activeFiltersRef.current,
         page: nextPage,
       });
-
       setItems((prev) => [...prev, ...result.data]);
       setHasNextPage(result.pageInfo.hasNextPage);
       setCurrentPage(nextPage);
@@ -82,44 +107,22 @@ export function useAnimeSearch() {
     }
   }, [currentPage, hasNextPage, isLoading]);
 
-  // Actualiza un solo campo de los filtros de forma tipada:
-  // updateFilter('sort', 'SCORE_DESC')
-  const updateFilter = useCallback(
-    <K extends keyof SearchAnimeParams>(
-      key: K,
-      value: SearchAnimeParams[K],
-    ) => {
-      setFilters((prev) => ({ ...prev, [key]: value }));
-    },
-    [],
-  );
-
-  // Limpia un campo de filtro (lo pone a undefined)
-  const clearFilter = useCallback((key: keyof SearchAnimeParams) => {
-    setFilters((prev) => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
-  }, []);
-
   const resetFilters = useCallback(() => {
+    filtersRef.current = DEFAULT_FILTERS;
     setFilters(DEFAULT_FILTERS);
   }, []);
 
   return {
-    // Estado
     items,
     filters,
     isLoading,
     isInitialLoading,
     hasNextPage,
     error,
-    // Acciones
     search,
     loadMore,
-    updateFilter,
-    clearFilter,
+    applyFilter,
+    updateQuery,
     resetFilters,
   } as const;
 }

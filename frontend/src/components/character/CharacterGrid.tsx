@@ -16,8 +16,8 @@ export function CharacterGrid({ items, sentinelRef, isLoadingMore }: CharacterGr
     return (
         <div>
             <div className={GRID_CLASSES}>
-                {items.map((character) => (
-                    <CharacterCard key={character.id} character={character} />
+                {items.map((character, index) => (
+                    <CharacterCard key={character.id} character={character} priority={index < 6} />
                 ))}
             </div>
 

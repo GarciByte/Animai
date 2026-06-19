@@ -11,27 +11,37 @@ import {
 
 interface AnimeFiltersProps {
     filters: SearchAnimeParams;
-    onUpdate: <K extends keyof SearchAnimeParams>(key: K, value: SearchAnimeParams[K]) => void;
+    onApplyFilter: <K extends keyof SearchAnimeParams>(key: K, value: SearchAnimeParams[K]) => void;
 }
 
 const SELECT_CLASS =
     'h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:border-accent focus:outline-none';
 
-export function AnimeFilters({ filters, onUpdate }: AnimeFiltersProps) {
+const VISIBLE_QUICK_FILTERS = QUICK_FILTER_OPTIONS.filter(
+    (opt) => opt.value === 'CURRENT_SEASON' || opt.value === 'TOP_UPCOMING',
+);
+
+export function AnimeFilters({ filters, onApplyFilter }: AnimeFiltersProps) {
+    const handleQuickFilterClick = (value: QuickFilter) => {
+        const isActive = filters.quickFilter === value;
+        // Clic sobre la vista rápida ya activa → la deselecciona
+        onApplyFilter('quickFilter', isActive ? undefined : value);
+    };
+
     return (
         <div className="flex flex-col gap-4">
-            {/* Vistas rápidas */}
+            {/* Vistas rápidas — deseleccionables con un segundo clic */}
             <div className="flex flex-wrap gap-2">
-                {QUICK_FILTER_OPTIONS.map((option) => {
+                {VISIBLE_QUICK_FILTERS.map((option) => {
                     const isActive = filters.quickFilter === option.value;
                     return (
                         <button
                             key={option.value}
                             type="button"
-                            onClick={() => onUpdate('quickFilter', option.value as QuickFilter)}
+                            onClick={() => handleQuickFilterClick(option.value)}
                             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${isActive
-                                ? 'bg-accent text-white'
-                                : 'bg-card text-muted hover:bg-card-hover hover:text-foreground'
+                                    ? 'bg-accent text-white'
+                                    : 'bg-card text-muted hover:bg-card-hover hover:text-foreground'
                                 }`}
                         >
                             {option.label}
@@ -40,10 +50,13 @@ export function AnimeFilters({ filters, onUpdate }: AnimeFiltersProps) {
                 })}
             </div>
 
+            {/* Selectores — cada cambio aplica y busca de inmediato */}
             <div className="flex flex-wrap gap-3">
                 <select
                     value={filters.sort ?? ''}
-                    onChange={(e) => onUpdate('sort', (e.target.value || undefined) as AnimeSort | undefined)}
+                    onChange={(e) =>
+                        onApplyFilter('sort', (e.target.value || undefined) as AnimeSort | undefined)
+                    }
                     className={SELECT_CLASS}
                 >
                     <option value="">Ordenar por…</option>
@@ -54,7 +67,9 @@ export function AnimeFilters({ filters, onUpdate }: AnimeFiltersProps) {
 
                 <select
                     value={filters.season ?? ''}
-                    onChange={(e) => onUpdate('season', (e.target.value || undefined) as AnimeSeason | undefined)}
+                    onChange={(e) =>
+                        onApplyFilter('season', (e.target.value || undefined) as AnimeSeason | undefined)
+                    }
                     className={SELECT_CLASS}
                 >
                     <option value="">Temporada</option>
@@ -65,7 +80,9 @@ export function AnimeFilters({ filters, onUpdate }: AnimeFiltersProps) {
 
                 <select
                     value={filters.seasonYear ?? ''}
-                    onChange={(e) => onUpdate('seasonYear', e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) =>
+                        onApplyFilter('seasonYear', e.target.value ? Number(e.target.value) : undefined)
+                    }
                     className={SELECT_CLASS}
                 >
                     <option value="">Año</option>
@@ -77,7 +94,7 @@ export function AnimeFilters({ filters, onUpdate }: AnimeFiltersProps) {
                 <select
                     value={filters.formats?.[0] ?? ''}
                     onChange={(e) =>
-                        onUpdate('formats', e.target.value ? [e.target.value as AnimeFormat] : undefined)
+                        onApplyFilter('formats', e.target.value ? [e.target.value as AnimeFormat] : undefined)
                     }
                     className={SELECT_CLASS}
                 >
@@ -90,7 +107,7 @@ export function AnimeFilters({ filters, onUpdate }: AnimeFiltersProps) {
                 <select
                     value={filters.statuses?.[0] ?? ''}
                     onChange={(e) =>
-                        onUpdate('statuses', e.target.value ? [e.target.value as AnimeStatus] : undefined)
+                        onApplyFilter('statuses', e.target.value ? [e.target.value as AnimeStatus] : undefined)
                     }
                     className={SELECT_CLASS}
                 >
@@ -101,6 +118,7 @@ export function AnimeFilters({ filters, onUpdate }: AnimeFiltersProps) {
                 </select>
             </div>
 
+            {/* Géneros — selección múltiple, cada toggle aplica y busca */}
             <div className="flex flex-wrap gap-2">
                 {GENRE_OPTIONS.map((genre) => {
                     const isActive = filters.genres?.includes(genre.value) ?? false;
@@ -113,7 +131,7 @@ export function AnimeFilters({ filters, onUpdate }: AnimeFiltersProps) {
                                 const next = isActive
                                     ? current.filter((g) => g !== genre.value)
                                     : [...current, genre.value];
-                                onUpdate('genres', next.length ? next : undefined);
+                                onApplyFilter('genres', next.length ? next : undefined);
                             }}
                             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${isActive
                                     ? 'bg-accent text-white'

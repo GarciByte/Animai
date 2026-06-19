@@ -16,8 +16,8 @@ export function AnimeGrid({ items, sentinelRef, isLoadingMore }: AnimeGridProps)
     return (
         <div>
             <div className={GRID_CLASSES}>
-                {items.map((anime) => (
-                    <AnimeCard key={anime.id} anime={anime} />
+                {items.map((anime, index) => (
+                    <AnimeCard key={anime.id} anime={anime} priority={index < 6} />
                 ))}
             </div>
 

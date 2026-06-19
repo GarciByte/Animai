@@ -4,9 +4,10 @@ import { CharacterListItem } from '@/types/character.types';
 
 interface CharacterCardProps {
     character: CharacterListItem;
+    priority?: boolean;
 }
 
-export function CharacterCard({ character }: CharacterCardProps) {
+export function CharacterCard({ character, priority = false }: CharacterCardProps) {
     return (
         <Link
             href={`/characters/${character.id}`}
@@ -17,6 +18,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
                     src={character.image}
                     alt={character.name}
                     fill
+                    priority={priority}
                     sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 16vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
