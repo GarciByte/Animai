@@ -1,3 +1,3 @@
 export default function Page() {
-    return <div>En construcción</div>;
+    return <div>Vista del buscador de personajes</div>;
 }

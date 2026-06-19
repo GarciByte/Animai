@@ -39,11 +39,11 @@ export const MAX_CHAT_HISTORY = 30;
 // ── Vistas rápidas del buscador de anime ────────────────────────
 
 export const QUICK_FILTER_OPTIONS: { value: QuickFilter; label: string }[] = [
-  { value: "TRENDING", label: "Trending Now" },
-  { value: "TOP_ANIME", label: "Top Anime Series" },
-  { value: "CURRENT_SEASON", label: "Current Season Anime Series" },
-  { value: "TOP_AIRING", label: "Top Airing Anime" },
-  { value: "TOP_UPCOMING", label: "Top Upcoming Anime" },
+  { value: 'TRENDING', label: 'Tendencias' },
+  { value: 'TOP_ANIME', label: 'Mejor Valorados' },
+  { value: 'CURRENT_SEASON', label: 'Temporada Actual' },
+  { value: 'TOP_AIRING', label: 'Mejor en Emisión' },
+  { value: 'TOP_UPCOMING', label: 'Próximos Estrenos' },
 ];
 
 // ── Ordenación ───────────────────────────────────────────────────
@@ -90,3 +90,25 @@ export const YEAR_OPTIONS: number[] = Array.from(
   { length: CURRENT_YEAR + 1 - 1960 + 1 },
   (_, i) => CURRENT_YEAR + 1 - i,
 );
+
+// ── Géneros (lista oficial de AniList) ────────────
+export const GENRE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'Action', label: 'Acción' },
+  { value: 'Adventure', label: 'Aventura' },
+  { value: 'Comedy', label: 'Comedia' },
+  { value: 'Drama', label: 'Drama' },
+  { value: 'Ecchi', label: 'Ecchi' },
+  { value: 'Fantasy', label: 'Fantasía' },
+  { value: 'Horror', label: 'Terror' },
+  { value: 'Mahou Shoujo', label: 'Chicas Mágicas' },
+  { value: 'Mecha', label: 'Mecha' },
+  { value: 'Music', label: 'Música' },
+  { value: 'Mystery', label: 'Misterio' },
+  { value: 'Psychological', label: 'Psicológico' },
+  { value: 'Romance', label: 'Romance' },
+  { value: 'Sci-Fi', label: 'Ciencia Ficción' },
+  { value: 'Slice of Life', label: 'Recuentos de la Vida' },
+  { value: 'Sports', label: 'Deportes' },
+  { value: 'Supernatural', label: 'Sobrenatural' },
+  { value: 'Thriller', label: 'Thriller' },
+];

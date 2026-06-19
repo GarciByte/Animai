@@ -173,13 +173,14 @@ export interface AnimePromoVideo {
   title: string;
   youtubeId: string;
   url: string;
-  thumbnail: string | null;
+  thumbnail: string;
 }
 
 export interface AnimeThemeItem {
   slug: string;
-  type: "OP" | "ED";
+  type: 'OP' | 'ED';
   videoUrl: string | null;
+  spoiler: boolean;
 }
 
 export interface AnimeDetailResponse {
