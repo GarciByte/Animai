@@ -13,7 +13,7 @@ export class AiController {
   constructor(private readonly aiService: AiService) {}
 
   @Post('chat')
-  @Throttle({ default: { limit: 15, ttl: 60000 } }) // 15 mensajes/min por IP
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     summary: 'Hablar con la IA interpretando un personaje de anime',
   })
@@ -27,7 +27,7 @@ export class AiController {
   }
 
   @Post('analyze/anime')
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 análisis/min por IP
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     summary:
       'La IA analiza un anime y da su opinión interpretando un personaje',
@@ -42,7 +42,7 @@ export class AiController {
   }
 
   @Post('analyze/character')
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 análisis/min por IP
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     summary:
       'La IA analiza un personaje y da su opinión interpretando otro personaje',
@@ -57,7 +57,7 @@ export class AiController {
   }
 
   @Post('translate')
-  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 traducciones/min por IP
+  @Throttle({ default: { limit: 40, ttl: 60000 } })
   @ApiOperation({
     summary:
       'Traduce un texto del inglés al español con contexto adicional opcional',

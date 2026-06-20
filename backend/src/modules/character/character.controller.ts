@@ -16,7 +16,7 @@ export class CharacterController {
   constructor(private readonly characterService: CharacterService) {}
 
   @Get()
-  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 req/min por IP
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     summary: 'Buscar y listar personajes ordenados por popularidad',
   })
@@ -33,7 +33,7 @@ export class CharacterController {
   }
 
   @Get(':id')
-  @Throttle({ default: { limit: 15, ttl: 60000 } }) // 15 req/min por IP
+  @Throttle({ default: { limit: 40, ttl: 60000 } })
   @ApiOperation({ summary: 'Obtener detalle completo de un personaje' })
   @ApiParam({ name: 'id', type: Number, description: 'AniList character ID' })
   @ApiResponse({ status: 200, description: 'Detalle completo del personaje' })

@@ -37,7 +37,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         */}
         <CharacterProvider>
           <NavBar />
-          <main className="min-h-dvh">{children}</main>
+          <main className="min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-5rem)]">
+            {children}
+          </main>
         </CharacterProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useCharacterDetail } from '@/hooks/useCharacterDetail';
 import { CharacterHero } from '@/components/character/CharacterHero';
+import { CharacterInfoGrid } from '@/components/character/CharacterInfoGrid';
 import { CharacterAppearancesSection } from '@/components/character/CharacterAppearancesSection';
 
 interface CharacterDetailViewProps {
@@ -19,9 +20,9 @@ export function CharacterDetailView({ characterId }: CharacterDetailViewProps) {
     if (isLoading) {
         return (
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6">
-                <div className="flex gap-4">
-                    <div className="skeleton aspect-2/3 w-28 rounded-lg sm:w-40" />
-                    <div className="flex flex-1 flex-col gap-2">
+                <div className="flex gap-6">
+                    <div className="skeleton aspect-2/3 w-36 rounded-lg sm:w-57.5" />
+                    <div className="flex flex-1 flex-col gap-3">
                         <div className="skeleton h-7 w-2/3 rounded" />
                         <div className="skeleton h-4 w-1/3 rounded" />
                     </div>
@@ -41,6 +42,7 @@ export function CharacterDetailView({ characterId }: CharacterDetailViewProps) {
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-6 pb-24">
             <CharacterHero target={target} />
+            <CharacterInfoGrid target={target} />
             <CharacterAppearancesSection mediaMain={target.mediaMain} mediaSupporting={target.mediaSupporting} />
         </div>
     );

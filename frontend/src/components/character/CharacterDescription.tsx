@@ -1,21 +1,40 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { aiService } from '@/services/ai.service';
 import { ApiError } from '@/lib/api';
 import { CharacterDetailResponse } from '@/types/character.types';
+import { cleanDescription, stripLinksToPlainText, parseLinks, resolveCharacterLink } from '@/lib/character-text';
 
 interface CharacterDescriptionProps {
     target: CharacterDetailResponse;
 }
 
-function stripHtml(text: string): string {
-    return text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+function RenderedDescription({ text }: { text: string }) {
+    const parts = parseLinks(text);
+    return (
+        <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">
+            {parts.map((part, i) => {
+                if (part.type === 'text') return <span key={i}>{part.content}</span>;
+                const { href, internal } = resolveCharacterLink(part.href!);
+                return internal ? (
+                    <Link key={i} href={href} className="font-medium text-accent hover:underline">
+                        {part.content}
+                    </Link>
+                ) : (
+                    <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-accent hover:underline">
+                        {part.content}
+                    </a>
+                );
+            })}
+        </p>
+    );
 }
 
 export function CharacterDescription({ target }: CharacterDescriptionProps) {
-    const original = target.description ? stripHtml(target.description) : null;
+    const original = target.description ? cleanDescription(target.description) : null;
 
     const [translated, setTranslated] = useState<string | null>(null);
     const [showOriginal, setShowOriginal] = useState(false);
@@ -24,22 +43,19 @@ export function CharacterDescription({ target }: CharacterDescriptionProps) {
 
     if (!original) return null;
 
-    const displayText = showOriginal ? original : translated ?? original;
     const animeName = target.mediaMain[0]?.title.romaji ?? target.mediaSupporting[0]?.title.romaji ?? null;
+    const showingOriginal = showOriginal || !translated;
 
     const handleTranslate = async () => {
         setIsTranslating(true);
         setError(null);
         try {
+            // Se manda sin la sintaxis de los enlaces, para que la IA
+            // traduzca solo prosa limpia y no intente "traducir" el marcado.
             const res = await aiService.translate({
-                text: original,
+                text: stripLinksToPlainText(original),
                 context: 'CHARACTER_DESCRIPTION',
-                characterContext: {
-                    name: target.name,
-                    animeName,
-                    gender: target.gender,
-                    age: target.age,
-                },
+                characterContext: { name: target.name, animeName, gender: target.gender, age: target.age },
             });
             setTranslated(res.translatedText);
             setShowOriginal(false);
@@ -52,22 +68,26 @@ export function CharacterDescription({ target }: CharacterDescriptionProps) {
 
     return (
         <div className="flex flex-col gap-2">
-            <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{displayText}</p>
-
-            {error && <p className="text-xs text-red-400">{error}</p>}
-
-            <div className="flex gap-2">
-                {!translated && (
+            <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Descripción</h2>
+                {!translated ? (
                     <Button variant="primary" size="sm" onClick={handleTranslate} isLoading={isTranslating}>
                         Traducir
                     </Button>
-                )}
-                {translated && (
-                    <Button variant="ghost" size="sm" onClick={() => setShowOriginal((prev) => !prev)}>
+                ) : (
+                    <Button variant="ghost" size="sm" onClick={() => setShowOriginal((p) => !p)}>
                         {showOriginal ? 'Mostrar traducción' : 'Mostrar original'}
                     </Button>
                 )}
             </div>
+
+            {showingOriginal ? (
+                <RenderedDescription text={original} />
+            ) : (
+                <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{translated}</p>
+            )}
+
+            {error && <p className="text-xs text-red-400">{error}</p>}
         </div>
     );
 }

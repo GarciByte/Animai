@@ -9,6 +9,7 @@ import { aiService } from '@/services/ai.service';
 import { ApiError } from '@/lib/api';
 import { CharacterDetailResponse } from '@/types/character.types';
 import { AnalyzeCharacterData } from '@/types/ai.types';
+import { cleanDescription } from '@/lib/character-text';
 
 interface AnalyzeCharacterModalProps {
     isOpen: boolean;
@@ -21,7 +22,7 @@ function buildAnalyzeCharacterData(target: CharacterDetailResponse): AnalyzeChar
         id: target.id,
         name: target.name,
         nativeName: target.nativeName,
-        description: target.description,
+        description: target.description ? cleanDescription(target.description) : null, // ← cambia esta línea
         age: target.age,
         gender: target.gender,
         bloodType: target.bloodType,

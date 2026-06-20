@@ -1,42 +1,39 @@
 "use client";
 
-import { useState, useCallback } from "react";
-
-function readValue<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-
-  try {
-    const item = window.localStorage.getItem(key);
-    return item ? (JSON.parse(item) as T) : fallback;
-  } catch (error) {
-    console.error(`Error leyendo localStorage para la clave "${key}":`, error);
-    return fallback;
-  }
-}
+import { useState, useEffect, useCallback } from "react";
 
 export function useLocalStorage<T>(key: string, fallback: T) {
-  // Lazy init: se ejecuta una sola vez en el cliente al montar.
-  // Evita el warning "Avoid calling setState() directly within an effect",
-  // ya que no hay ningún useEffect implicado.
-  const [value, setStoredValue] = useState<T>(() => readValue(key, fallback));
+  const [value, setStoredValue] = useState<T>(fallback);
+
+  useEffect(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      if (item) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStoredValue(JSON.parse(item) as T);
+      }
+    } catch (error) {
+      console.error(
+        `Error leyendo localStorage para la clave "${key}":`,
+        error,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setValue = useCallback(
     (newValue: T | ((prev: T) => T)) => {
       setStoredValue((prev) => {
         const resolved =
           newValue instanceof Function ? newValue(prev) : newValue;
-
-        if (typeof window !== "undefined") {
-          try {
-            window.localStorage.setItem(key, JSON.stringify(resolved));
-          } catch (error) {
-            console.error(
-              `Error guardando en localStorage la clave "${key}":`,
-              error,
-            );
-          }
+        try {
+          window.localStorage.setItem(key, JSON.stringify(resolved));
+        } catch (error) {
+          console.error(
+            `Error guardando en localStorage la clave "${key}":`,
+            error,
+          );
         }
-
         return resolved;
       });
     },
@@ -44,9 +41,7 @@ export function useLocalStorage<T>(key: string, fallback: T) {
   );
 
   const removeValue = useCallback(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(key);
-    }
+    window.localStorage.removeItem(key);
     setStoredValue(fallback);
   }, [key, fallback]);
 

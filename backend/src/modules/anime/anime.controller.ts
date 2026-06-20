@@ -23,7 +23,7 @@ export class AnimeController {
   constructor(private readonly animeService: AnimeService) {}
 
   @Get()
-  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 req/min por IP
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Buscar y listar animes con filtros' })
   @ApiQuery({
     name: 'query',
@@ -67,7 +67,7 @@ export class AnimeController {
   }
 
   @Get(':id')
-  @Throttle({ default: { limit: 15, ttl: 60000 } }) // 15 req/min por IP
+  @Throttle({ default: { limit: 40, ttl: 60000 } })
   @ApiOperation({ summary: 'Obtener detalle completo de un anime' })
   @ApiParam({ name: 'id', type: Number, description: 'AniList media ID' })
   @ApiResponse({

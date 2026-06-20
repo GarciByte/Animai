@@ -141,3 +141,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   MULTIMEDIA_PROJECT: "Proyecto multimedia",
   PICTURE_BOOK: "Libro ilustrado",
 };
+
+// Margen de seguridad bajo el límite real del backend (2000), para
+// dejar hueco a cualquier diferencia de conteo de caracteres
+export const MAX_PERSONA_DESCRIPTION_LENGTH = 1500;

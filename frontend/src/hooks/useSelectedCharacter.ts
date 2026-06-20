@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SelectedCharacter } from "@/types/ai.types";
 import { DEFAULT_CHARACTER, STORAGE_KEYS } from "@/lib/constants";
 
@@ -11,33 +11,30 @@ function persist(character: SelectedCharacter): void {
   );
 }
 
-function getInitialCharacter(): SelectedCharacter {
-  // Solo se ejecuta en el cliente: con useState lazy init nunca corre
-  // en el servidor durante el renderizado inicial de Next.js
-  if (typeof window === "undefined") return DEFAULT_CHARACTER;
-
-  const stored = window.localStorage.getItem(STORAGE_KEYS.SELECTED_CHARACTER);
-
-  if (!stored) {
-    persist(DEFAULT_CHARACTER);
-    return DEFAULT_CHARACTER;
-  }
-
-  try {
-    const parsed = JSON.parse(stored) as Partial<SelectedCharacter>;
-    // Fusiona con el default: si en el futuro se añade un campo nuevo a
-    // SelectedCharacter, los usuarios con datos antiguos guardados no
-    // se quedan con `undefined` en ese campo.
-    return { ...DEFAULT_CHARACTER, ...parsed };
-  } catch {
-    persist(DEFAULT_CHARACTER);
-    return DEFAULT_CHARACTER;
-  }
-}
-
 export function useSelectedCharacter() {
+  // El primer render (servidor Y cliente) usa SIEMPRE el mismo valor,
+  // para que la hidratación nunca pueda chocar.
   const [character, setCharacterState] =
-    useState<SelectedCharacter>(getInitialCharacter);
+    useState<SelectedCharacter>(DEFAULT_CHARACTER);
+
+  // Tras el montaje (solo en el cliente), se sincroniza con lo que
+  // haya guardado en localStorage.
+  useEffect(() => {
+    const stored = window.localStorage.getItem(STORAGE_KEYS.SELECTED_CHARACTER);
+
+    if (!stored) {
+      persist(DEFAULT_CHARACTER);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored) as Partial<SelectedCharacter>;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCharacterState({ ...DEFAULT_CHARACTER, ...parsed });
+    } catch {
+      persist(DEFAULT_CHARACTER);
+    }
+  }, []);
 
   const setCharacter = useCallback((newCharacter: SelectedCharacter) => {
     persist(newCharacter);
@@ -49,5 +46,5 @@ export function useSelectedCharacter() {
     [setCharacter],
   );
 
-  return { character, setCharacter, resetToDefault };
+  return { character, setCharacter, resetToDefault } as const;
 }
