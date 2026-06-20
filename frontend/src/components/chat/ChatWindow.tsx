@@ -47,7 +47,7 @@ export function ChatWindow() {
     };
 
     return (
-        <div className="flex h-[calc(100dvh-5rem)] flex-col">
+        <div className="mx-auto flex h-[calc(100dvh-4rem)] w-full max-w-3xl flex-col sm:h-[calc(100dvh-5rem)]">
             {/* Cabecera con el personaje activo */}
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <CharacterBadge character={character} size="md" showAnimeName />

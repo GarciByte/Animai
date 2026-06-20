@@ -1,16 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimeListItem } from '@/types/anime.types';
-
-const FORMAT_LABELS: Record<string, string> = {
-    TV: 'TV',
-    TV_SHORT: 'TV Short',
-    MOVIE: 'Película',
-    SPECIAL: 'Especial',
-    OVA: 'OVA',
-    ONA: 'ONA',
-    MUSIC: 'Música',
-};
+import { FORMAT_LABEL_MAP } from '@/lib/constants';
 
 interface AnimeCardProps {
     anime: AnimeListItem;
@@ -19,7 +10,7 @@ interface AnimeCardProps {
 
 export function AnimeCard({ anime, priority = false }: AnimeCardProps) {
     const title = anime.title.romaji;
-    const formatLabel = anime.format ? FORMAT_LABELS[anime.format] ?? anime.format : null;
+    const formatLabel = anime.format ? FORMAT_LABEL_MAP[anime.format] ?? anime.format : null;
 
     return (
         <Link

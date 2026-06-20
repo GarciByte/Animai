@@ -44,6 +44,7 @@ export interface AnimeRecommendation {
   coverImage: string;
   format: string | null;
   averageScore: number | null;
+  type: string;
 }
 
 export interface AnimeNewsItem {

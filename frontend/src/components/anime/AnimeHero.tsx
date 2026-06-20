@@ -6,10 +6,8 @@ import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { AnimeDetailResponse } from '@/types/anime.types';
 import { AnalyzeAiModal } from './AnalyzeAiModal';
+import { FORMAT_LABEL_MAP } from '@/lib/constants';
 
-const FORMAT_LABELS: Record<string, string> = {
-    TV: 'TV', TV_SHORT: 'TV Short', MOVIE: 'Película', SPECIAL: 'Especial', OVA: 'OVA', ONA: 'ONA', MUSIC: 'Música',
-};
 const STATUS_LABELS: Record<string, string> = {
     FINISHED: 'Finalizado', RELEASING: 'En emisión', NOT_YET_RELEASED: 'Próximamente', CANCELLED: 'Cancelado', HIATUS: 'En pausa',
 };
@@ -29,7 +27,7 @@ export function AnimeHero({ anime }: AnimeHeroProps) {
         <div className="relative">
             <div className="relative h-40 w-full overflow-hidden rounded-xl bg-card sm:h-56 md:h-64">
                 {anime.bannerImage && (
-                    <Image src={anime.bannerImage} alt="" fill sizes="100vw" className="object-cover opacity-60" />
+                    <Image src={anime.bannerImage} alt="" fill sizes="100vw" priority className="object-cover opacity-60" />
                 )}
                 <div className="absolute inset-0 bg-linear-to-t from-background via-background/40 to-transparent" />
             </div>
@@ -47,22 +45,16 @@ export function AnimeHero({ anime }: AnimeHeroProps) {
 
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                         {anime.format && (
-                            <span className="rounded-full bg-card px-2.5 py-1 font-medium">{FORMAT_LABELS[anime.format] ?? anime.format}</span>
+                            <span className="rounded-full bg-card px-2.5 py-1 font-medium">{FORMAT_LABEL_MAP[anime.format]}</span>
                         )}
                         {anime.status && (
                             <span className="rounded-full bg-card px-2.5 py-1 font-medium">{STATUS_LABELS[anime.status] ?? anime.status}</span>
-                        )}
-                        {anime.averageScore !== null && (
-                            <span className="rounded-full bg-accent/20 px-2.5 py-1 font-medium text-accent">★ {anime.averageScore}/100</span>
-                        )}
-                        {anime.episodes !== null && (
-                            <span className="rounded-full bg-card px-2.5 py-1 font-medium">{anime.episodes} ep.</span>
                         )}
                     </div>
 
                     <Button onClick={() => setIsModalOpen(true)} size="sm" className="mt-1 w-fit">
                         <Sparkles className="h-4 w-4" />
-                        Analizar con IA
+                        Analizar
                     </Button>
                 </div>
             </div>

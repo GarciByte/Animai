@@ -11,7 +11,7 @@ import { AnimeSkeleton } from '@/components/anime/AnimeSkeleton';
 export function HomeView() {
     const {
         items, filters, isLoading, isInitialLoading,
-        hasNextPage, error, search, loadMore, applyFilter, updateQuery,
+        hasNextPage, error, search, searchByName, loadMore, applyFilter, updateQuery,
     } = useAnimeSearch();
 
     useEffect(() => {
@@ -35,7 +35,7 @@ export function HomeView() {
                 <SearchBar
                     value={filters.query ?? ''}
                     onChange={(value) => updateQuery(value || undefined)}
-                    onSearch={search}
+                    onSearch={searchByName}
                     isLoading={isLoading}
                     placeholder="Buscar anime por nombre…"
                 />

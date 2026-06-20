@@ -480,6 +480,7 @@ export class AnimeService {
         coverImage: n.mediaRecommendation!.coverImage.large,
         format: n.mediaRecommendation!.format ?? null,
         averageScore: n.mediaRecommendation!.averageScore ?? null,
+        type: n.mediaRecommendation!.type,
       }));
 
     // Jikan: noticias
@@ -557,35 +558,18 @@ export class AnimeService {
           })
           .filter((v): v is AnimePromoVideo => v !== null) ?? [];
 
-      const music: AnimePromoVideo[] =
-        jikan?.videos?.data?.music_videos
-          ?.map((v) => {
-            const youtubeId =
-              extractYoutubeId(v.video.youtube_id) ??
-              extractYoutubeId(v.video.embed_url) ??
-              extractYoutubeId(v.video.url);
-            if (!youtubeId) return null;
-            return {
-              title: v.meta?.title ?? v.title,
-              youtubeId,
-              url: `https://www.youtube.com/watch?v=${youtubeId}`,
-              thumbnail: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
-            };
-          })
-          .filter((v): v is AnimePromoVideo => v !== null) ?? [];
-
-      const all = [...promo, ...music];
+      const all = [...promo];
       return all.length ? all : null;
     })();
 
-    // Posters: máx. 20
+    // Posters: máx. 50
     const posters: string[] | null =
       tmdb?.images?.posters
         ?.filter((p) => p.iso_639_1 === 'en' || p.iso_639_1 === null)
-        ?.slice(0, 20)
+        ?.slice(0, 40)
         ?.map((p) => `${this.TMDB_IMAGE_BASE}${p.file_path}`) ?? null;
 
-    // Backdrops: máx. 20
+    // Backdrops: máx. 50
     const backdrops: string[] | null =
       tmdb?.images?.backdrops
         ?.slice(0, 20)

@@ -18,15 +18,19 @@ export function RelationsRow({ relations }: RelationsRowProps) {
         <section>
             <h2 className="mb-3 text-lg font-semibold">Relacionados</h2>
             <div className="flex gap-3 overflow-x-auto pb-2">
-                {relations.map((r) => (
-                    <MiniAnimeCard
-                        key={r.id}
-                        id={r.id}
-                        title={r.title.romaji}
-                        coverImage={r.coverImage}
-                        subtitle={RELATION_LABELS[r.relationType] ?? r.relationType}
-                    />
-                ))}
+                {relations.map((r) => {
+                    const baseLabel = RELATION_LABELS[r.relationType] ?? r.relationType;
+                    const isAnime = r.type === 'ANIME';
+                    return (
+                        <MiniAnimeCard
+                            key={r.id}
+                            title={r.title.romaji}
+                            coverImage={r.coverImage}
+                            subtitle={isAnime ? baseLabel : `${baseLabel} · Manga`}
+                            href={isAnime ? `/anime/${r.id}` : undefined}
+                        />
+                    );
+                })}
             </div>
         </section>
     );

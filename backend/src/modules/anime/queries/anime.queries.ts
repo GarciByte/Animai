@@ -106,7 +106,7 @@ export const ANIME_DETAIL_QUERY = `
             id
             title { romaji english }
             coverImage { large }
-            format averageScore isAdult
+            format averageScore type isAdult
           }
         }
       }

@@ -54,12 +54,23 @@ export function useAnimeSearch() {
     }
   }, []);
 
-  // Botón "Buscar" / Enter del buscador por nombre: aplica los filtros
-  // tal como están en este momento, incluyendo el texto recién escrito.
+  // Carga inicial / recarga manteniendo los filtros tal cual están.
+  // La usa solo el useEffect de montaje en HomeView.
   const search = useCallback(
     () => performSearch(filtersRef.current),
     [performSearch],
   );
+
+  // Botón "Buscar" del buscador por nombre: fuerza orden por Popularidad.
+  const searchByName = useCallback(() => {
+    const next: SearchAnimeParams = {
+      ...filtersRef.current,
+      sort: "POPULARITY_DESC",
+    };
+    filtersRef.current = next;
+    setFilters(next);
+    return performSearch(next);
+  }, [performSearch]);
 
   // Cambiar cualquier filtro (vista rápida, orden, temporada, año,
   // formato, estado, género): actualiza el estado Y busca de inmediato.
@@ -95,7 +106,16 @@ export function useAnimeSearch() {
         ...activeFiltersRef.current,
         page: nextPage,
       });
-      setItems((prev) => [...prev, ...result.data]);
+
+      setItems((prev) => {
+        // Evita IDs duplicados si AniList repite algún resultado entre páginas
+        const existingIds = new Set(prev.map((item) => item.id));
+        const newItems = result.data.filter(
+          (item) => !existingIds.has(item.id),
+        );
+        return [...prev, ...newItems];
+      });
+
       setHasNextPage(result.pageInfo.hasNextPage);
       setCurrentPage(nextPage);
     } catch (err) {
@@ -120,6 +140,7 @@ export function useAnimeSearch() {
     hasNextPage,
     error,
     search,
+    searchByName,
     loadMore,
     applyFilter,
     updateQuery,

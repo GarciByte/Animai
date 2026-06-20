@@ -29,6 +29,14 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+button:not(:disabled) {
+    cursor: pointer;
+}
+
+select {
+    cursor: pointer;
+}
+
 /* ── Scrollbar personalizada (solo en escritorio) ─────────────────── */
 @media (min-width: 768px) {
     ::-webkit-scrollbar {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Eye } from 'lucide-react';
 import { AnimeThemeItem } from '@/types/anime.types';
 import { VideoCard } from './VideoCard';
+import { ThemeVideoCard } from './ThemeVideoCard';
 
 interface ThemesRowProps {
     themes: AnimeThemeItem[] | null;
@@ -16,6 +17,7 @@ function ThemeCard({ theme }: { theme: AnimeThemeItem }) {
 
     if (!theme.videoUrl) return null;
 
+    const label = `${TYPE_LABELS[theme.type]} — ${theme.slug}`;
     const youtubeMatch = theme.videoUrl.match(/(?:youtu\.be\/|v=)([\w-]{11})/);
 
     if (!revealed) {
@@ -27,31 +29,16 @@ function ThemeCard({ theme }: { theme: AnimeThemeItem }) {
             >
                 <Eye className="h-6 w-6" />
                 <span>Contiene spoiler — clic para ver</span>
-                <span className="font-medium text-foreground">
-                    {TYPE_LABELS[theme.type]} — {theme.slug}
-                </span>
+                <span className="font-medium text-foreground">{label}</span>
             </button>
         );
     }
 
     if (youtubeMatch) {
-        return (
-            <VideoCard
-                youtubeId={youtubeMatch[1]}
-                title={`${TYPE_LABELS[theme.type]} — ${theme.slug}`}
-                thumbnail={null}
-            />
-        );
+        return <VideoCard youtubeId={youtubeMatch[1]} title={label} thumbnail={null} />;
     }
 
-    return (
-        <div className="w-64 shrink-0 overflow-hidden rounded-lg bg-card">
-            <video controls className="aspect-video w-full" src={theme.videoUrl} preload="none">
-                <track kind="captions" />
-            </video>
-            <p className="px-2 py-1.5 text-xs text-muted">{TYPE_LABELS[theme.type]} — {theme.slug}</p>
-        </div>
-    );
+    return <ThemeVideoCard videoUrl={theme.videoUrl} label={label} />;
 }
 
 export function ThemesRow({ themes }: ThemesRowProps) {

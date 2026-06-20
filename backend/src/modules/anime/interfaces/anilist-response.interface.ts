@@ -86,6 +86,7 @@ export interface AnilistRecommendationNode {
     coverImage: { large: string };
     format: string | null;
     averageScore: number | null;
+    type: string;
     isAdult: boolean;
   } | null;
 }

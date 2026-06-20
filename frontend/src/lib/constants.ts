@@ -39,11 +39,11 @@ export const MAX_CHAT_HISTORY = 30;
 // ── Vistas rápidas del buscador de anime ────────────────────────
 
 export const QUICK_FILTER_OPTIONS: { value: QuickFilter; label: string }[] = [
-  { value: 'TRENDING', label: 'Tendencias' },
-  { value: 'TOP_ANIME', label: 'Mejor Valorados' },
-  { value: 'CURRENT_SEASON', label: 'Temporada Actual' },
-  { value: 'TOP_AIRING', label: 'Mejor en Emisión' },
-  { value: 'TOP_UPCOMING', label: 'Próximos Estrenos' },
+  { value: "TRENDING", label: "Tendencias" },
+  { value: "TOP_ANIME", label: "Mejor Valorados" },
+  { value: "CURRENT_SEASON", label: "Temporada Actual" },
+  { value: "TOP_AIRING", label: "Mejor en Emisión" },
+  { value: "TOP_UPCOMING", label: "Próximos Estrenos" },
 ];
 
 // ── Ordenación ───────────────────────────────────────────────────
@@ -93,22 +93,51 @@ export const YEAR_OPTIONS: number[] = Array.from(
 
 // ── Géneros (lista oficial de AniList) ────────────
 export const GENRE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'Action', label: 'Acción' },
-  { value: 'Adventure', label: 'Aventura' },
-  { value: 'Comedy', label: 'Comedia' },
-  { value: 'Drama', label: 'Drama' },
-  { value: 'Ecchi', label: 'Ecchi' },
-  { value: 'Fantasy', label: 'Fantasía' },
-  { value: 'Horror', label: 'Terror' },
-  { value: 'Mahou Shoujo', label: 'Chicas Mágicas' },
-  { value: 'Mecha', label: 'Mecha' },
-  { value: 'Music', label: 'Música' },
-  { value: 'Mystery', label: 'Misterio' },
-  { value: 'Psychological', label: 'Psicológico' },
-  { value: 'Romance', label: 'Romance' },
-  { value: 'Sci-Fi', label: 'Ciencia Ficción' },
-  { value: 'Slice of Life', label: 'Recuentos de la Vida' },
-  { value: 'Sports', label: 'Deportes' },
-  { value: 'Supernatural', label: 'Sobrenatural' },
-  { value: 'Thriller', label: 'Thriller' },
+  { value: "Action", label: "Acción" },
+  { value: "Adventure", label: "Aventura" },
+  { value: "Comedy", label: "Comedia" },
+  { value: "Drama", label: "Drama" },
+  { value: "Ecchi", label: "Ecchi" },
+  { value: "Fantasy", label: "Fantasía" },
+  { value: "Horror", label: "Terror" },
+  { value: "Mahou Shoujo", label: "Chicas Mágicas" },
+  { value: "Mecha", label: "Mecha" },
+  { value: "Music", label: "Música" },
+  { value: "Mystery", label: "Misterio" },
+  { value: "Psychological", label: "Psicológico" },
+  { value: "Romance", label: "Romance" },
+  { value: "Sci-Fi", label: "Ciencia Ficción" },
+  { value: "Slice of Life", label: "Recuentos de la Vida" },
+  { value: "Sports", label: "Deportes" },
+  { value: "Supernatural", label: "Sobrenatural" },
+  { value: "Thriller", label: "Thriller" },
 ];
+
+// Mapa derivado de GENRE_OPTIONS para traducir géneros sueltos
+// (se usa en la ficha técnica del detalle de anime)
+export const GENRE_LABEL_MAP: Record<string, string> = Object.fromEntries(
+  GENRE_OPTIONS.map((g) => [g.value, g.label]),
+);
+
+export const FORMAT_LABEL_MAP: Record<string, string> = Object.fromEntries(
+  FORMAT_OPTIONS.map((f) => [f.value, f.label]),
+);
+
+// Traducción del campo `source` de AniList (MediaSource)
+export const SOURCE_LABELS: Record<string, string> = {
+  ORIGINAL: "Original",
+  MANGA: "Manga",
+  LIGHT_NOVEL: "Novela ligera",
+  VISUAL_NOVEL: "Novela visual",
+  VIDEO_GAME: "Videojuego",
+  OTHER: "Otra",
+  NOVEL: "Novela",
+  DOUJINSHI: "Doujinshi",
+  ANIME: "Anime",
+  WEB_NOVEL: "Web novel",
+  LIVE_ACTION: "Acción real",
+  GAME: "Juego",
+  COMIC: "Cómic",
+  MULTIMEDIA_PROJECT: "Proyecto multimedia",
+  PICTURE_BOOK: "Libro ilustrado",
+};

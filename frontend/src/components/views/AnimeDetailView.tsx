@@ -1,17 +1,17 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAnimeDetail } from '@/hooks/useAnimeDetail';
 import { AnimeHero } from '@/components/anime/AnimeHero';
 import { AnimeInfoGrid } from '@/components/anime/AnimeInfoGrid';
+import { RelationsRow } from '@/components/anime/RelationsRow';
+import { CharactersRow } from '@/components/anime/CharactersRow';
 import { PromoVideosRow } from '@/components/anime/PromoVideosRow';
 import { ThemesRow } from '@/components/anime/ThemesRow';
-import { PicturesGallery } from '@/components/anime/PicturesGallery';
-import { RelationsRow } from '@/components/anime/RelationsRow';
-import { RecommendationsRow } from '@/components/anime/RecommendationsRow';
-import { CharactersRow } from '@/components/anime/CharactersRow';
-import { TmdbImagesRow } from '@/components/anime/TmdbImagesRow';
+import { Gallery } from '@/components/anime/Gallery';
 import { ReviewsList } from '@/components/anime/ReviewsList';
 import { NewsRow } from '@/components/anime/NewsRow';
+import { RecommendationsRow } from '@/components/anime/RecommendationsRow';
 import { ExternalLinksRow } from '@/components/anime/ExternalLinksRow';
 
 interface AnimeDetailViewProps {
@@ -20,6 +20,11 @@ interface AnimeDetailViewProps {
 
 export function AnimeDetailView({ animeId }: AnimeDetailViewProps) {
     const { anime, isLoading, error } = useAnimeDetail(animeId);
+
+    // Sube al principio de la página al navegar a otro anime
+    useEffect(() => {
+        window.scrollTo({ top: 0 });
+    }, [animeId]);
 
     if (isLoading) {
         return (
@@ -45,20 +50,18 @@ export function AnimeDetailView({ animeId }: AnimeDetailViewProps) {
     }
 
     return (
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-6 pb-24">
             <AnimeHero anime={anime} />
             <AnimeInfoGrid anime={anime} />
-            <ExternalLinksRow links={anime.externalLinks} malId={anime.idMal} />
+            <RelationsRow relations={anime.relations} />
+            <CharactersRow characters={anime.characters} />
             <PromoVideosRow anime={anime} />
             <ThemesRow themes={anime.themes} />
-            <PicturesGallery pictures={anime.pictures} />
-            <RelationsRow relations={anime.relations} />
-            <RecommendationsRow recommendations={anime.recommendations} />
-            <CharactersRow characters={anime.characters} />
-            <TmdbImagesRow title="Posters" images={anime.postersEs} aspect="poster" />
-            <TmdbImagesRow title="Backdrops" images={anime.backdrops} aspect="backdrop" />
+            <Gallery pictures={anime.pictures} posters={anime.posters} backdrops={anime.backdrops} />
             <ReviewsList reviews={anime.reviews} />
             <NewsRow news={anime.news} />
+            <RecommendationsRow recommendations={anime.recommendations} />
+            <ExternalLinksRow links={anime.externalLinks} malId={anime.idMal} />
         </div>
     );
 }

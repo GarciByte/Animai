@@ -4,32 +4,28 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { aiService } from '@/services/ai.service';
 import { ApiError } from '@/lib/api';
-import { AnimeDetailResponse } from '@/types/anime.types';
+import { CharacterDetailResponse } from '@/types/character.types';
 
-interface AnimeDescriptionProps {
-    anime: AnimeDetailResponse;
+interface CharacterDescriptionProps {
+    target: CharacterDetailResponse;
 }
 
-// AniList devuelve algo de HTML básico (<br>, <i>) en la descripción
 function stripHtml(text: string): string {
     return text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
 }
 
-export function AnimeDescription({ anime }: AnimeDescriptionProps) {
-    // Prioridad: descripción de TMDB en español; si no llega, la de AniList
-    const original = anime.descriptionEs ?? (anime.description ? stripHtml(anime.description) : null);
-    const isAlreadySpanish = Boolean(anime.descriptionEs);
+export function CharacterDescription({ target }: CharacterDescriptionProps) {
+    const original = target.description ? stripHtml(target.description) : null;
 
     const [translated, setTranslated] = useState<string | null>(null);
     const [showOriginal, setShowOriginal] = useState(false);
     const [isTranslating, setIsTranslating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    if (!original) {
-        return <p className="text-sm text-muted">Sin sinopsis disponible.</p>;
-    }
+    if (!original) return null;
 
     const displayText = showOriginal ? original : translated ?? original;
+    const animeName = target.mediaMain[0]?.title.romaji ?? target.mediaSupporting[0]?.title.romaji ?? null;
 
     const handleTranslate = async () => {
         setIsTranslating(true);
@@ -37,12 +33,12 @@ export function AnimeDescription({ anime }: AnimeDescriptionProps) {
         try {
             const res = await aiService.translate({
                 text: original,
-                context: 'ANIME_DESCRIPTION',
-                animeContext: {
-                    title: anime.title.romaji,
-                    genres: anime.genres,
-                    format: anime.format,
-                    tags: anime.tags.map((t) => t.name),
+                context: 'CHARACTER_DESCRIPTION',
+                characterContext: {
+                    name: target.name,
+                    animeName,
+                    gender: target.gender,
+                    age: target.age,
                 },
             });
             setTranslated(res.translatedText);
@@ -55,13 +51,13 @@ export function AnimeDescription({ anime }: AnimeDescriptionProps) {
     };
 
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
             <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{displayText}</p>
 
             {error && <p className="text-xs text-red-400">{error}</p>}
 
             <div className="flex gap-2">
-                {!isAlreadySpanish && !translated && (
+                {!translated && (
                     <Button variant="primary" size="sm" onClick={handleTranslate} isLoading={isTranslating}>
                         Traducir
                     </Button>

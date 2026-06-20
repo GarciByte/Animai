@@ -13,14 +13,16 @@ export function useCharacterSearch() {
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
-  // Congela la query en el momento de buscar para que loadMore
-  // pagine sobre los mismos resultados
+  // Refleja el texto del buscador de forma síncrona
+  const queryRef = useRef("");
+  // Snapshot de la query con la que se hizo la última petición real;
+  // loadMore pagina siempre sobre esta, no sobre texto a medio escribir
   const activeQueryRef = useRef("");
 
   const isInitialLoading = isLoading && items.length === 0;
 
-  const search = useCallback(async () => {
-    activeQueryRef.current = query;
+  const performSearch = useCallback(async (q: string) => {
+    activeQueryRef.current = q;
 
     setIsLoading(true);
     setError(null);
@@ -30,11 +32,10 @@ export function useCharacterSearch() {
 
     try {
       const result = await characterService.searchCharacters({
-        query: activeQueryRef.current || undefined,
+        query: q || undefined,
         page: 1,
         perPage: 20,
       });
-
       setItems(result.data);
       setHasNextPage(result.pageInfo.hasNextPage);
     } catch (err) {
@@ -46,7 +47,19 @@ export function useCharacterSearch() {
     } finally {
       setIsLoading(false);
     }
-  }, [query]);
+  }, []);
+
+  // Identidad estable: no depende de closures sobre `query`, así que
+  // se puede meter en las deps de un useEffect de montaje sin riesgo.
+  const search = useCallback(
+    () => performSearch(queryRef.current),
+    [performSearch],
+  );
+
+  const setQuery = useCallback((value: string) => {
+    queryRef.current = value;
+    setQueryState(value);
+  }, []);
 
   const loadMore = useCallback(async () => {
     if (isLoading || !hasNextPage) return;
@@ -61,7 +74,13 @@ export function useCharacterSearch() {
         perPage: 20,
       });
 
-      setItems((prev) => [...prev, ...result.data]);
+      setItems((prev) => {
+        const existingIds = new Set(prev.map((item) => item.id));
+        const newItems = result.data.filter(
+          (item) => !existingIds.has(item.id),
+        );
+        return [...prev, ...newItems];
+      });
       setHasNextPage(result.pageInfo.hasNextPage);
       setCurrentPage(nextPage);
     } catch (err) {
@@ -74,10 +93,6 @@ export function useCharacterSearch() {
       setIsLoading(false);
     }
   }, [currentPage, hasNextPage, isLoading]);
-
-  const setQuery = useCallback((value: string) => {
-    setQueryState(value);
-  }, []);
 
   return {
     items,

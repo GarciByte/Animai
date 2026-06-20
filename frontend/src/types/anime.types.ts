@@ -135,6 +135,7 @@ export interface AnimeRecommendation {
   coverImage: string;
   format: AnimeFormat | null;
   averageScore: number | null;
+  type: string;
 }
 
 export interface AnimeNewsItem {
@@ -220,6 +221,6 @@ export interface AnimeDetailResponse {
   promoVideos: AnimePromoVideo[] | null;
   themes: AnimeThemeItem[] | null;
   descriptionEs: string | null;
-  postersEs: string[] | null;
+  posters: string[] | null;
   backdrops: string[] | null;
 }

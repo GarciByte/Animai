@@ -1,4 +1,5 @@
 import { AnimeDetailResponse } from '@/types/anime.types';
+import { GENRE_LABEL_MAP, SOURCE_LABELS } from '@/lib/constants';
 import { AnimeDescription } from './AnimeDescription';
 import { TagsRow } from './TagsRow';
 
@@ -26,17 +27,10 @@ interface AnimeInfoGridProps {
 export function AnimeInfoGrid({ anime }: AnimeInfoGridProps) {
     return (
         <div className="grid gap-6 md:grid-cols-3">
-            <div className="flex flex-col gap-4 md:col-span-2">
-                <div>
-                    <h2 className="mb-2 text-lg font-semibold">Sinopsis</h2>
-                    <AnimeDescription anime={anime} />
-                </div>
-                <TagsRow tags={anime.tags} />
-            </div>
-
             <div className="rounded-lg border border-border bg-card px-4 py-1">
-                <InfoRow label="Duración" value={anime.duration ? `${anime.duration} min/ep` : null} />
-                <InfoRow label="Fuente" value={anime.source} />
+                <InfoRow label="Episodios" value={anime.episodes ? String(anime.episodes) : null} />
+                <InfoRow label="Duración" value={anime.duration ? `${anime.duration} min` : null} />
+                <InfoRow label="Fuente" value={anime.source ? (SOURCE_LABELS[anime.source] ?? anime.source) : null} />
                 <InfoRow
                     label="Temporada"
                     value={anime.season ? `${SEASON_LABELS[anime.season] ?? anime.season} ${anime.seasonYear ?? ''}` : null}
@@ -44,11 +38,23 @@ export function AnimeInfoGrid({ anime }: AnimeInfoGridProps) {
                 <InfoRow label="Emisión" value={anime.startDate.year ? formatDate(anime.startDate) : null} />
                 <InfoRow label="Finalización" value={anime.endDate.year ? formatDate(anime.endDate) : null} />
                 <InfoRow label="País de origen" value={anime.countryOfOrigin} />
-                <InfoRow label="Puntuación media (usuarios)" value={anime.meanScore ? `${anime.meanScore}/100` : null} />
+                <InfoRow label="Puntuación" value={anime.averageScore !== null ? `${anime.averageScore}/100` : null} />
                 <InfoRow label="Popularidad" value={anime.popularity ? `#${anime.popularity}` : null} />
                 <InfoRow label="Favoritos" value={anime.favourites ? anime.favourites.toLocaleString('es-ES') : null} />
                 <InfoRow label="Estudios" value={anime.studios.length ? anime.studios.map((s) => s.name).join(', ') : null} />
-                <InfoRow label="Géneros" value={anime.genres.length ? anime.genres.join(', ') : null} />
+                <InfoRow
+                    label="Géneros"
+                    value={anime.genres.length ? anime.genres.map((g) => GENRE_LABEL_MAP[g] ?? g).join(', ') : null}
+                />
+            </div>
+
+            {/* Sinopsis + tags */}
+            <div className="flex flex-col gap-4 md:col-span-2">
+                <div>
+                    <h2 className="mb-2 text-lg font-semibold">Sinopsis</h2>
+                    <AnimeDescription anime={anime} />
+                </div>
+                <TagsRow tags={anime.tags} />
             </div>
         </div>
     );
